@@ -20,18 +20,26 @@ public class Claim {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotNull(message = "Food ID is required for a claim")
-    @Column(name = "food_id", nullable = false)
-    private Long foodId;
+    // Renamed from foodId to listingId to match the standard entity name
+    @NotNull(message = "Listing ID is required for a claim")
+    @Column(name = "listing_id", nullable = false)
+    private Long listingId;
 
 
-    @NotNull(message = "Claimer ID is required")
-    @Column(name = "claimer_id", nullable = false)
-    private Long claimerId;
+    // Renamed from claimerId to recipientId for clearer domain language
+    @NotNull(message = "Recipient ID is required")
+    @Column(name = "recipient_id", nullable = false)
+    private Long recipientId;
 
+    // Changed name from 'claimStatus' to 'status' for simplicity and consistency with Listing entity
     @Column(nullable = false)
-    private String claimStatus = "PENDING";
+    private String status = "PENDING_PICKUP";
 
+    // Changed name from 'claimedAt' to 'claimTime' to match ClaimService usage
     @Column(nullable = false)
-    private Instant claimedAt = Instant.now();
+    private Instant claimTime = Instant.now();
+
+    // Added for tracking when the item was actually picked up
+    @Column(name = "fulfillment_time")
+    private Instant fulfillmentTime;
 }

@@ -10,5 +10,10 @@ import java.util.List;
 @Repository
 public interface ClaimRepository extends JpaRepository<Claim,Long> {
 
-    List<Claim> findByClaimerId(Long claimerId);
+
+    List<Claim> findByRecipientId(Long recipientId);
+
+
+    List<Claim> findByListingIdIn(List<Long> listingIds);
+
 }

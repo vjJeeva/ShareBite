@@ -20,6 +20,10 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank(message = "Name cannot be empty")
+    @Column(nullable = false)
+    private String name;
+
     @NotBlank(message = "Email cannot be empty")
     @Email(message = "Invalid email format")
     @Column(unique = true, nullable = false)
@@ -28,10 +32,6 @@ public class User {
     @NotBlank(message = "Password cannot be empty")
     @Column(nullable = false)
     private String passwordHash;
-
-    @NotBlank(message = "Name cannot be empty")
-    @Column(nullable = false)
-    private String name;
 
     @NotBlank(message = "Phone number cannot be empty")
     @Column(unique = true, nullable = false)
