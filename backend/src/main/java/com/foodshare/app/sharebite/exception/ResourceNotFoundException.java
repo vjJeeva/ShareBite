@@ -5,7 +5,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.io.Serial;
 
-// Tells Spring to automatically return an HTTP 404 Not Found status
 @ResponseStatus(value = HttpStatus.NOT_FOUND)
 public class ResourceNotFoundException extends RuntimeException {
 

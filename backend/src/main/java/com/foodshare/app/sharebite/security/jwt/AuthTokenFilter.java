@@ -1,5 +1,8 @@
 package com.foodshare.app.sharebite.security.jwt;
 
+import com.foodshare.app.sharebite.repository.UserRepository;
+import com.foodshare.app.sharebite.security.services.UserDetailsImpl;
+import com.foodshare.app.sharebite.model.User;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -8,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -17,13 +19,11 @@ import java.io.IOException;
 
 public class AuthTokenFilter extends OncePerRequestFilter {
 
-    // Note: This filter is instantiated as a Bean, so autowiring works.
     @Autowired
     private JwtUtils jwtUtils;
 
-    // This will be our UserDetailsServiceImpl instance (created next)
     @Autowired
-    private UserDetailsService userDetailsService;
+    private UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -33,20 +33,24 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             String jwt = parseJwt(request);
 
             if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
-                String username = jwtUtils.getUserNameFromJwtToken(jwt);
 
-                // Load user details from the database using the username (email)
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                String userIdString = jwtUtils.getUserIdStringFromJwtToken(jwt);
+                Long userId = Long.valueOf(userIdString);
 
-                // Creates an authentication object based on the token
+
+                User user = userRepository.findById(userId)
+                        .orElseThrow(() -> new RuntimeException("User not found for JWT ID: " + userId));
+
+
+                UserDetails userDetails = UserDetailsImpl.build(user);
+
+
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                         userDetails,
-                        null, // Token-based auth doesn't need password here
+                        null,
                         userDetails.getAuthorities());
 
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                // Set the user as authenticated in the Spring Security Context
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         } catch (Exception e) {
@@ -59,7 +63,6 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     private String parseJwt(HttpServletRequest request) {
         String headerAuth = request.getHeader("Authorization");
 
-        // Extracts the token string following the "Bearer " prefix
         if (StringUtils.hasText(headerAuth) && headerAuth.startsWith("Bearer ")) {
             return headerAuth.substring(7);
         }

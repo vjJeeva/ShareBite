@@ -1,8 +1,10 @@
 package com.foodshare.app.sharebite.model;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,6 +27,11 @@ public class Listing {
     private String name;
 
     private String description;
+
+    @NotNull(message = "Servings quantity is required")
+    @Positive(message = "Servings must be a positive number")
+    @Column(nullable = false)
+    private Double servings;
 
     @NotBlank(message = "Food type is required")
     private String type;
@@ -54,7 +61,7 @@ public class Listing {
     private Long donorId;
 
     private Long claimerId;
-    //verification
+
     private Boolean recipientSigned = false;
     private Boolean donorVerified = false;
 }

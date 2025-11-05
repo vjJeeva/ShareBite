@@ -23,7 +23,7 @@ public class ClaimController {
     private ClaimService claimService;
 
     @PostMapping("/initiate/{listingId}")
-    @PreAuthorize("hasAuthority('RECIPIENT')")
+    @PreAuthorize("hasAuthority('ROLE_RECIPIENT')")
     public ResponseEntity<?> initiateClaim(
             @PathVariable Long listingId,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
@@ -39,7 +39,7 @@ public class ClaimController {
     }
 
     @GetMapping("/my-claims")
-    @PreAuthorize("hasAuthority('RECIPIENT')")
+    @PreAuthorize("hasAuthority('ROLE_RECIPIENT')")
     public ResponseEntity<List<Claim>> getClaimsByRecipient(
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
 
@@ -49,7 +49,7 @@ public class ClaimController {
     }
 
     @PutMapping("/cancel/{claimId}")
-    @PreAuthorize("hasAuthority('RECIPIENT')")
+    @PreAuthorize("hasAuthority('ROLE_RECIPIENT')")
     public ResponseEntity<?> cancelClaim(
             @PathVariable Long claimId,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
@@ -65,7 +65,7 @@ public class ClaimController {
     }
 
     @GetMapping("/donated-claims")
-    @PreAuthorize("hasAuthority('DONOR')")
+    @PreAuthorize("hasAuthority('ROLE_DONOR')")
     public ResponseEntity<List<Claim>> getClaimsForDonorView(
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
 
@@ -75,7 +75,7 @@ public class ClaimController {
     }
 
     @PutMapping("/fulfill/{claimId}")
-    @PreAuthorize("hasAuthority('DONOR')")
+    @PreAuthorize("hasAuthority('ROLE_DONOR')")
     public ResponseEntity<?> fulfillClaim(
             @PathVariable Long claimId,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {

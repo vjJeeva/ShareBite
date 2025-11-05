@@ -1,4 +1,3 @@
-// ListingController.java
 package com.foodshare.app.sharebite.controller;
 
 import com.foodshare.app.sharebite.model.Listing;
@@ -24,7 +23,7 @@ public class ListingController {
     private ListingService listingService;
 
     @PostMapping("/create")
-    @PreAuthorize("hasAuthority('DONOR')")
+    @PreAuthorize("hasAuthority('ROLE_DONOR')")
     public ResponseEntity<Listing> createListing(
             @Valid @RequestBody ListingRequest listingRequest,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
@@ -51,7 +50,7 @@ public class ListingController {
     }
 
     @GetMapping("/my-donations")
-    @PreAuthorize("hasAuthority('DONOR')")
+    @PreAuthorize("hasAuthority('ROLE_DONOR')")
     public ResponseEntity<List<Listing>> getListingsByCurrentDonor(
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
 

@@ -3,6 +3,7 @@ package com.foodshare.app.sharebite.payload.request;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
 import lombok.Data;
 import java.time.Instant;
 
@@ -13,6 +14,10 @@ public class ListingRequest {
     private String name;
 
     private String description;
+
+    @NotNull(message = "Servings quantity is required")
+    @Positive(message = "Servings must be a positive number.")
+    private Double servings;
 
     @NotBlank(message = "Food type is required")
     private String type;

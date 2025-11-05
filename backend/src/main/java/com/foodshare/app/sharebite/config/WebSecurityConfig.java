@@ -23,29 +23,22 @@ import org.springframework.web.filter.CorsFilter;
 @EnableMethodSecurity
 public class WebSecurityConfig {
 
-    // 1. Password Encoder Bean (REQUIRED)
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // 2. JWT Filter Bean
+
     @Bean
     public AuthTokenFilter authenticationJwtTokenFilter() {
         return new AuthTokenFilter();
     }
 
-    /**
-     * AuthenticationManager Bean (REQUIRED)
-     * Spring will automatically use the available UserDetailsService and PasswordEncoder
-     * to configure the default DaoAuthenticationProvider internally.
-     */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();
     }
 
-    // 3. Security Filter Chain (REQUIRED)
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -61,7 +54,6 @@ public class WebSecurityConfig {
                         .anyRequest().permitAll()
                 )
 
-                // Add the JWT filter to the chain
                 .addFilterBefore(
                         authenticationJwtTokenFilter(),
                         UsernamePasswordAuthenticationFilter.class
@@ -70,7 +62,7 @@ public class WebSecurityConfig {
         return http.build();
     }
 
-    // 4. CORS Configuration Bean
+
     @Bean
     public CorsFilter corsFilter() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

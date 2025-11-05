@@ -1,4 +1,3 @@
-// UserDetailsImpl.java
 package com.foodshare.app.sharebite.security.services;
 
 import com.foodshare.app.sharebite.model.User;
@@ -22,7 +21,7 @@ public record UserDetailsImpl(
         @JsonIgnore
         String password,
 
-        Collection<? extends GrantedAuthority> authorities // ⬅️ The field is named 'authorities'
+        Collection<? extends GrantedAuthority> authorities
 ) implements UserDetails, Serializable {
 
     @Serial
@@ -30,7 +29,7 @@ public record UserDetailsImpl(
 
     public static UserDetailsImpl build(User user) {
         List<GrantedAuthority> authorities = Collections.singletonList(
-                new SimpleGrantedAuthority(user.getRole()));
+                new SimpleGrantedAuthority("ROLE_" + user.getRole()));
 
         return new UserDetailsImpl(
                 user.getId(),
@@ -40,12 +39,9 @@ public record UserDetailsImpl(
                 authorities);
     }
 
-    // --- UserDetails Interface Implementations ---
-
-    // ⬅️ CRITICAL FIX: Explicitly implement getAuthorities() and return the component accessor.
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return authorities; // Accesses the record component
+        return authorities;
     }
 
     @Override
@@ -55,7 +51,7 @@ public record UserDetailsImpl(
 
     @Override
     public String getPassword() {
-        return password; // Accesses the record component
+        return password;
     }
 
     @Override
@@ -78,7 +74,6 @@ public record UserDetailsImpl(
         return true;
     }
 
-    // Use the component accessor for equality check
     @Override
     public boolean equals(Object o) {
         if (this == o)
@@ -86,6 +81,6 @@ public record UserDetailsImpl(
         if (o == null || getClass() != o.getClass())
             return false;
         UserDetailsImpl user = (UserDetailsImpl) o;
-        return Objects.equals(this.id, user.id()); // ⬅️ Using the accessor method id()
+        return Objects.equals(this.id, user.id());
     }
 }

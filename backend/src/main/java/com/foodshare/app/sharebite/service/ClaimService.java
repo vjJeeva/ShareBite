@@ -61,12 +61,11 @@ public class ClaimService {
             throw new ClaimProcessException("Claim must be in PENDING_PICKUP status to fulfill.");
         }
 
-        // 1. Update Claim Status to FULFILLED
         claim.setStatus("FULFILLED");
         claim.setFulfillmentTime(Instant.now());
         Claim fulfilledClaim = claimRepository.save(claim);
 
-        // 2. DELETE THE LISTING: The listing is removed permanently as the food transfer is complete.
+
         listingRepository.delete(listing);
 
         return fulfilledClaim;
