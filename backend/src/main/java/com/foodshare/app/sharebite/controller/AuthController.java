@@ -6,6 +6,7 @@ import com.foodshare.app.sharebite.payload.request.RegisterRequest;
 import com.foodshare.app.sharebite.payload.response.JwtResponse;
 import com.foodshare.app.sharebite.repository.UserRepository;
 import com.foodshare.app.sharebite.security.jwt.JwtUtils;
+import com.foodshare.app.sharebite.security.services.UserDetailsImpl;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -41,17 +43,36 @@ public class AuthController {
                 new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = jwtUtils.generateJwtToken(authentication);
 
-        User userDetails = (User) authentication.getPrincipal();
+        Long userId;
+        String userRole;
+        String userEmail;
+
+        Object principal = authentication.getPrincipal();
+
+        if (principal instanceof UserDetailsImpl userPrincipal) {
+            userId = userPrincipal.id();
+            userRole = userPrincipal.getAuthorities().iterator().next().getAuthority();
+            userEmail = userPrincipal.getUsername();
+
+        } else if (principal instanceof UserDetails userPrincipal) {
+            User user = userRepository.findByEmail(userPrincipal.getUsername())
+                    .orElseThrow(() -> new RuntimeException("Error: User not found after authentication."));
+            userId = user.getId();
+            userRole = user.getRole();
+            userEmail = user.getEmail();
+        } else {
+            throw new RuntimeException("Unrecognized principal type after authentication.");
+        }
+
+        String jwt = jwtUtils.generateJwtToken(userId);
 
         return ResponseEntity.ok(new JwtResponse(jwt,
-                userDetails.getId(),
-                userDetails.getEmail(),
-                userDetails.getRole()));
+                userId,
+                userEmail,
+                userRole));
     }
 
-    // 2. REGISTRATION ENDPOINT
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest registerRequest) {
 
