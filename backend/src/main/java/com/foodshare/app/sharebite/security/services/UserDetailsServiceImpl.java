@@ -1,17 +1,17 @@
 package com.foodshare.app.sharebite.security.services;
 
 import com.foodshare.app.sharebite.model.User;
+import com.foodshare.app.sharebite.model.Profile;
+import com.foodshare.app.sharebite.repository.ProfileRepository;
 import com.foodshare.app.sharebite.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.security.authentication.DisabledException;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
@@ -19,21 +19,22 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Autowired
     UserRepository userRepository;
 
-    @Override
+    @Autowired
+    ProfileRepository profileRepository;
 
+    @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User Not Found with email: " + email));
 
+        if (!user.getIsEmailVerified()) {
+            throw new DisabledException("Your email is not verified. Please check your inbox for the OTP.");
+        }
 
-        List<GrantedAuthority> authorities = Collections.singletonList(
-                new SimpleGrantedAuthority(user.getRole()));
+        Optional<Profile> profileOptional = profileRepository.findByUserId(user.getId());
+        Profile profile = profileOptional.orElse(null);
 
-
-        return new org.springframework.security.core.userdetails.User(
-                user.getEmail(),
-                user.getPasswordHash(),
-                authorities);
+        return UserDetailsImpl.build(user, profile);
     }
 }

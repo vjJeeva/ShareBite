@@ -1,6 +1,7 @@
 package com.foodshare.app.sharebite.security.services;
 
 import com.foodshare.app.sharebite.model.User;
+import com.foodshare.app.sharebite.model.Profile; // 🛑 NEW IMPORT
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -27,17 +28,22 @@ public record UserDetailsImpl(
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public static UserDetailsImpl build(User user) {
+
+    public static UserDetailsImpl build(User user, Profile profile) {
+
         List<GrantedAuthority> authorities = Collections.singletonList(
                 new SimpleGrantedAuthority("ROLE_" + user.getRole()));
+
+        String userName = (profile != null) ? profile.getName() : user.getEmail();
 
         return new UserDetailsImpl(
                 user.getId(),
                 user.getEmail(),
-                user.getName(),
+                userName,
                 user.getPasswordHash(),
                 authorities);
     }
+
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

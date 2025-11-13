@@ -1,5 +1,7 @@
 package com.foodshare.app.sharebite.security.jwt;
 
+import com.foodshare.app.sharebite.model.Profile;
+import com.foodshare.app.sharebite.repository.ProfileRepository;
 import com.foodshare.app.sharebite.repository.UserRepository;
 import com.foodshare.app.sharebite.security.services.UserDetailsImpl;
 import com.foodshare.app.sharebite.model.User;
@@ -25,6 +27,9 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private ProfileRepository profileRepository;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
@@ -37,12 +42,12 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                 String userIdString = jwtUtils.getUserIdStringFromJwtToken(jwt);
                 Long userId = Long.valueOf(userIdString);
 
-
                 User user = userRepository.findById(userId)
                         .orElseThrow(() -> new RuntimeException("User not found for JWT ID: " + userId));
 
-
-                UserDetails userDetails = UserDetailsImpl.build(user);
+                Profile profile = profileRepository.findByUserId(userId)
+                        .orElse(null);
+                UserDetails userDetails = UserDetailsImpl.build(user, profile);
 
 
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
