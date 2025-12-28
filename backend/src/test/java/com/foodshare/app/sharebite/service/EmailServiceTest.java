@@ -1,5 +1,6 @@
 package com.foodshare.app.sharebite.service;
 
+import com.foodshare.app.sharebite.service.EmailService.EmailType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,44 +24,61 @@ public class EmailServiceTest {
     @InjectMocks
     private EmailService emailService;
 
-    private final String senderEmail = "noreply@sharebite.com";
+    private final String senderEmail = "sharebite02@gmail.com";
     private final String recipientEmail = "user@example.com";
     private final String otpCode = "123456";
 
     @BeforeEach
     void setUp() {
-        // Use ReflectionTestUtils to set the private @Value field
+        // Set the private @Value field for the sender email
         ReflectionTestUtils.setField(emailService, "senderEmail", senderEmail);
     }
 
     @Test
-    void sendVerificationOtp_Success() {
+    void sendOtpEmail_Registration_Success() {
         // Arrange
         ArgumentCaptor<SimpleMailMessage> messageCaptor = ArgumentCaptor.forClass(SimpleMailMessage.class);
 
         // Act
-        emailService.sendVerificationOtp(recipientEmail, otpCode);
+        emailService.sendOtpEmail(recipientEmail, otpCode, EmailType.REGISTRATION);
 
         // Assert
         verify(mailSender, times(1)).send(messageCaptor.capture());
-
         SimpleMailMessage sentMessage = messageCaptor.getValue();
 
         assertEquals(senderEmail, sentMessage.getFrom());
         assertEquals(recipientEmail, sentMessage.getTo()[0]);
-        assertTrue(sentMessage.getSubject().contains("OTP"));
+        assertEquals("ShareBite: Email Verification Code", sentMessage.getSubject());
+        assertTrue(sentMessage.getText().contains("joining ShareBite"));
         assertTrue(sentMessage.getText().contains(otpCode));
     }
 
     @Test
-    void sendVerificationOtp_HandlesExceptionGracefully() {
+    void sendOtpEmail_PasswordReset_Success() {
+        // Arrange
+        ArgumentCaptor<SimpleMailMessage> messageCaptor = ArgumentCaptor.forClass(SimpleMailMessage.class);
+
+        // Act
+        emailService.sendOtpEmail(recipientEmail, otpCode, EmailType.PASSWORD_RESET);
+
+        // Assert
+        verify(mailSender, times(1)).send(messageCaptor.capture());
+        SimpleMailMessage sentMessage = messageCaptor.getValue();
+
+        assertEquals("ShareBite: Password Reset Code", sentMessage.getSubject());
+        assertTrue(sentMessage.getText().contains("reset your password"));
+        assertTrue(sentMessage.getText().contains(otpCode));
+    }
+
+    @Test
+    void sendOtpEmail_HandlesExceptionGracefully() {
         // Arrange
         doThrow(new RuntimeException("SMTP Server Down")).when(mailSender).send(any(SimpleMailMessage.class));
 
         // Act & Assert
-        // We assert doesNotThrow because the service catches the exception and logs it
+        // We assert doesNotThrow because the service catches the exception and logs it to stderr
         assertDoesNotThrow(() -> {
-            emailService.sendVerificationOtp(recipientEmail, otpCode);
+            emailService.sendOtpEmail(recipientEmail, otpCode, EmailType.REGISTRATION);
         });
 
         verify(mailSender, times(1)).send(any(SimpleMailMessage.class));
