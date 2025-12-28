@@ -11,6 +11,7 @@ import com.foodshare.app.sharebite.repository.UserRepository;
 import com.foodshare.app.sharebite.security.jwt.JwtUtils;
 import com.foodshare.app.sharebite.security.services.UserDetailsImpl;
 import com.foodshare.app.sharebite.service.EmailService;
+import com.foodshare.app.sharebite.service.EmailService.EmailType;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -66,7 +67,6 @@ public class AuthController {
             userId = userPrincipal.id();
             userRole = userPrincipal.getAuthorities().iterator().next().getAuthority();
             userEmail = userPrincipal.getUsername();
-
         } else if (principal instanceof UserDetails userPrincipal) {
             User user = userRepository.findByEmail(userPrincipal.getUsername())
                     .orElseThrow(() -> new RuntimeException("Error: User not found after authentication."));
@@ -114,29 +114,12 @@ public class AuthController {
 
         profileRepository.save(profile);
 
-        // Generate and Send OTP
-
         savedUser = generateAndSaveOtp(savedUser);
-        emailService.sendVerificationOtp(savedUser.getEmail(), savedUser.getOtpCode());
+        emailService.sendOtpEmail(savedUser.getEmail(), savedUser.getOtpCode(), EmailType.REGISTRATION);
 
         return ResponseEntity.ok("User registered successfully. Please check your email for the verification code.");
     }
 
-    private User generateAndSaveOtp(User user) {
-
-        String otp = String.format("%06d", new Random().nextInt(1000000));
-
-        Instant expiryTime = Instant.now().plusSeconds(5 * 60);
-
-        user.setOtpCode(otp);
-        user.setOtpExpiryTime(expiryTime);
-        return userRepository.save(user);
-    }
-
-    /**
-     * Endpoint for users to manually request a new OTP if the original expired.
-     * Payload: {"email": "user@example.com"}
-     */
     @PostMapping("/send-otp")
     public ResponseEntity<?> sendOtp(@RequestBody Map<String, String> request) {
         String email = request.get("email");
@@ -148,16 +131,11 @@ public class AuthController {
         }
 
         user = generateAndSaveOtp(user);
-        emailService.sendVerificationOtp(user.getEmail(), user.getOtpCode());
+        emailService.sendOtpEmail(user.getEmail(), user.getOtpCode(), EmailType.REGISTRATION);
 
-        return ResponseEntity.ok("Verification OTP sent to " + user.getEmail() + ". Check your inbox (and spam folder)!");
+        return ResponseEntity.ok("Verification OTP sent to " + user.getEmail() + ". Check your inbox!");
     }
 
-
-    /**
-     * Endpoint for users to submit the received OTP for verification.
-     * Payload: {"email": "user@example.com", "otp": "123456"}
-     */
     @PostMapping("/verify-otp")
     public ResponseEntity<?> verifyOtp(@RequestBody Map<String, String> request) {
         String email = request.get("email");
@@ -174,7 +152,7 @@ public class AuthController {
         }
 
         if (user.getOtpExpiryTime().isBefore(Instant.now())) {
-            return ResponseEntity.badRequest().body("OTP code has expired. Please request a new one using the /send-otp endpoint.");
+            return ResponseEntity.badRequest().body("OTP code has expired. Please request a new one.");
         }
 
         user.setIsEmailVerified(true);
@@ -183,5 +161,64 @@ public class AuthController {
         userRepository.save(user);
 
         return ResponseEntity.ok("Email verified successfully! You can now log in.");
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
+
+        user = generateAndSaveOtp(user);
+        emailService.sendOtpEmail(user.getEmail(), user.getOtpCode(), EmailType.PASSWORD_RESET);
+
+        return ResponseEntity.ok("Password reset OTP sent to your email.");
+    }
+
+    @PostMapping("/verify-reset-otp")
+    public ResponseEntity<?> verifyResetOtp(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        String otp = request.get("otp");
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found."));
+
+        if (user.getOtpCode() == null || !otp.equals(user.getOtpCode())) {
+            return ResponseEntity.badRequest().body("Invalid OTP code.");
+        }
+        if (user.getOtpExpiryTime().isBefore(Instant.now())) {
+            return ResponseEntity.badRequest().body("OTP has expired.");
+        }
+
+        return ResponseEntity.ok("OTP verified. You may now reset your password.");
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        String otp = request.get("otp");
+        String newPassword = request.get("newPassword");
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found."));
+
+        if (user.getOtpCode() == null || !otp.equals(user.getOtpCode()) || user.getOtpExpiryTime().isBefore(Instant.now())) {
+            return ResponseEntity.badRequest().body("Session expired or invalid. Please try again.");
+        }
+
+        user.setPasswordHash(encoder.encode(newPassword));
+        user.setOtpCode(null);
+        user.setOtpExpiryTime(null);
+        userRepository.save(user);
+
+        return ResponseEntity.ok("Password has been reset successfully.");
+    }
+
+    private User generateAndSaveOtp(User user) {
+        String otp = String.format("%06d", new Random().nextInt(1000000));
+        Instant expiryTime = Instant.now().plusSeconds(5 * 60);
+        user.setOtpCode(otp);
+        user.setOtpExpiryTime(expiryTime);
+        return userRepository.save(user);
     }
 }
