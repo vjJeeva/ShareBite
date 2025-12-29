@@ -35,8 +35,9 @@ public class ListingRequest {
     private String address;
 
     @NotBlank(message = "Donor phone number is required")
-    @Pattern(regexp = "^[0-9]{10}$|^\\+[0-9]{1,3}[0-9]{10}$", message = "Invalid phone number format")
+    @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Invalid phone number format. Must be 10-15 digits.")
     private String phoneNumber;
 
+    @NotNull(message = "Claim by time is required")
     private Instant claimByTime;
 }
