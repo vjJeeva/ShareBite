@@ -63,6 +63,7 @@ public class ClaimServiceTest {
 
         assertNotNull(result);
         assertEquals("CLAIMED", sampleListing.getStatus());
+        assertEquals(recipientId, sampleListing.getClaimerId());
         verify(listingRepository, times(1)).save(sampleListing);
         verify(claimRepository, times(1)).save(any(Claim.class));
     }
@@ -89,7 +90,8 @@ public class ClaimServiceTest {
 
         assertEquals("FULFILLED", sampleClaim.getStatus());
         assertNotNull(sampleClaim.getFulfillmentTime());
-        verify(listingRepository, times(1)).delete(sampleListing);
+        assertEquals("COMPLETED", sampleListing.getStatus());
+        verify(listingRepository, times(1)).save(sampleListing);
     }
 
     @Test

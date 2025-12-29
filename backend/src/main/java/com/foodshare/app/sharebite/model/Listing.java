@@ -26,6 +26,7 @@ public class Listing {
     @Column(nullable = false)
     private String name;
 
+    @Column(length = 1000)
     private String description;
 
     @NotNull(message = "Servings quantity is required")
@@ -37,6 +38,7 @@ public class Listing {
     private String type;
 
     @NotBlank(message = "Photo URL is required")
+    @Column(length = 2048)
     private String photoUrl; // photo URL (result of cloud upload)
 
     @NotNull(message = "Latitude is required")
@@ -46,6 +48,7 @@ public class Listing {
     private Double longitude; // map location (for geolocation)
 
     @NotBlank(message = "Address is required")
+    @Column(length = 500)
     private String address;
 
     @NotBlank(message = "Donor phone number is required")
@@ -64,4 +67,10 @@ public class Listing {
 
     private Boolean recipientSigned = false;
     private Boolean donorVerified = false;
+
+    @Transient
+    private String donorName;
+
+    @Transient
+    private String donorEmail;
 }
