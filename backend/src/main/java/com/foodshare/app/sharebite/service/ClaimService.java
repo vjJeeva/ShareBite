@@ -33,6 +33,7 @@ public class ClaimService {
         }
 
         listing.setStatus("CLAIMED");
+        listing.setClaimerId(recipientId);
         listingRepository.save(listing);
 
         Claim newClaim = new Claim();
@@ -66,7 +67,8 @@ public class ClaimService {
         Claim fulfilledClaim = claimRepository.save(claim);
 
 
-        listingRepository.delete(listing);
+        listing.setStatus("COMPLETED");
+        listingRepository.save(listing);
 
         return fulfilledClaim;
     }
