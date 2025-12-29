@@ -24,15 +24,19 @@ public class ListingController {
 
     @PostMapping("/create")
     @PreAuthorize("hasAuthority('ROLE_DONOR')")
-    public ResponseEntity<Listing> createListing(
+    public ResponseEntity<?> createListing(
             @Valid @RequestBody ListingRequest listingRequest,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
 
-        Long donorId = userDetails.id();
-
-        Listing newListing = listingService.createListing(listingRequest, donorId);
-
-        return new ResponseEntity<>(newListing, HttpStatus.CREATED);
+        try {
+            Long donorId = userDetails.id();
+            Listing newListing = listingService.createListing(listingRequest, donorId);
+            return new ResponseEntity<>(newListing, HttpStatus.CREATED);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error creating listing: " + e.getMessage());
+        }
     }
 
     @GetMapping("/available")

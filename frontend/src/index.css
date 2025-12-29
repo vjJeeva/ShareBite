@@ -62,3 +62,26 @@ body {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+.grayscale {
+  filter: grayscale(100%);
+}
+
+.custom-tabs .nav-link {
+  color: var(--secondary-color);
+  font-weight: 500;
+  border: none;
+  padding: 1rem 1.5rem;
+}
+
+.custom-tabs .nav-link.active {
+  color: var(--primary-color);
+  background: transparent;
+  border-bottom: 3px solid var(--primary-color);
+}
+
+.hover-shadow:hover {
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+  transform: translateY(-5px);
+  transition: all 0.3s ease;
+}
