@@ -1,13 +1,28 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Table, Badge, Button, Spinner, Alert, Card } from 'react-bootstrap';
+import { Container, Table, Badge, Button, Spinner, Alert, Card, Modal, Row, Col } from 'react-bootstrap';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import api from '../api/api';
-import type { Claim } from '../types';
-import { FaHistory, FaTimesCircle } from 'react-icons/fa';
+import type { Claim, Listing } from '../types';
+import { FaHistory, FaTimesCircle, FaMapMarkerAlt, FaUtensils, FaClock, FaInfoCircle } from 'react-icons/fa';
+import L from 'leaflet';
+
+// Fix for default Leaflet marker icons
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 const MyClaims: React.FC = () => {
   const [claims, setClaims] = useState<Claim[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  
+  // Modal State
+  const [showModal, setShowModal] = useState(false);
+  const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
 
   useEffect(() => {
     fetchClaims();
@@ -22,6 +37,25 @@ const MyClaims: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleShowDetails = async (listingId: number) => {
+    setShowModal(true);
+    setDetailsLoading(true);
+    try {
+      const response = await api.get(`/listings/${listingId}`);
+      setSelectedListing(response.data);
+    } catch (err) {
+      console.error("Failed to fetch listing details", err);
+      // Optionally show error inside modal or toast
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedListing(null);
   };
 
   const handleCancel = async (claimId: number) => {
@@ -65,7 +99,15 @@ const MyClaims: React.FC = () => {
             <tbody>
               {claims.map((claim) => (
                 <tr key={claim.id} className="align-middle">
-                  <td className="px-4">#{claim.listingId}</td>
+                  <td className="px-4">
+                    <Button 
+                      variant="link" 
+                      className="p-0 text-decoration-none fw-bold" 
+                      onClick={() => handleShowDetails(claim.listingId)}
+                    >
+                      #{claim.listingId} <FaInfoCircle className="ms-1 small" />
+                    </Button>
+                  </td>
                   <td>
                     <Badge bg={
                       claim.status === 'FULFILLED' ? 'success' : 
@@ -92,6 +134,90 @@ const MyClaims: React.FC = () => {
           </Table>
         </Card>
       )}
+
+      {/* Listing Details Modal */}
+      <Modal show={showModal} onHide={handleCloseModal} size="lg" centered>
+        <Modal.Header closeButton className="border-0 pb-0">
+          <Modal.Title className="fw-bold text-success">
+            {detailsLoading ? 'Loading Details...' : selectedListing?.name || 'Listing Details'}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="p-4">
+          {detailsLoading ? (
+             <div className="text-center py-5"><Spinner animation="border" variant="success" /></div>
+          ) : selectedListing ? (
+            <Row>
+              <Col md={5} className="mb-3 mb-md-0 d-flex flex-column gap-3">
+                <div className="rounded overflow-hidden shadow-sm" style={{ height: '200px' }}>
+                  <img 
+                    src={selectedListing.photoUrl || 'https://via.placeholder.com/400x300?text=Food'} 
+                    alt={selectedListing.name}
+                    className="w-100 h-100 object-fit-cover"
+                  />
+                </div>
+                {selectedListing.latitude !== 0 && (
+                  <div className="rounded overflow-hidden shadow-sm border" style={{ height: '200px' }}>
+                     <MapContainer 
+                        center={[selectedListing.latitude, selectedListing.longitude]} 
+                        zoom={14} 
+                        scrollWheelZoom={false} 
+                        style={{ height: '100%', width: '100%' }}
+                     >
+                        <TileLayer
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        />
+                        <Marker position={[selectedListing.latitude, selectedListing.longitude]}>
+                           <Popup>Pickup Location</Popup>
+                        </Marker>
+                     </MapContainer>
+                  </div>
+                )}
+              </Col>
+              <Col md={7}>
+                <div className="d-flex justify-content-between align-items-start mb-2">
+                  <Badge bg="success" className="mb-2">{selectedListing.type}</Badge>
+                  <span className="text-muted small">ID: #{selectedListing.id}</span>
+                </div>
+                
+                <h4 className="fw-bold mb-1">{selectedListing.name}</h4>
+                <p className="text-muted mb-3">{selectedListing.description}</p>
+                
+                <div className="mb-2">
+                  <FaUtensils className="text-success me-2" />
+                  <strong>Servings:</strong> {selectedListing.servings}
+                </div>
+                
+                <div className="mb-2">
+                  <FaMapMarkerAlt className="text-danger me-2" />
+                  <strong>Address:</strong> {selectedListing.address}
+                </div>
+                
+                <div className="mb-3">
+                  <FaClock className="text-primary me-2" />
+                  <strong>Claim By:</strong> {new Date(selectedListing.claimByTime).toLocaleString()}
+                </div>
+
+                <div className="p-3 bg-light rounded border shadow-sm">
+                   <h6 className="fw-bold mb-3 text-dark border-bottom pb-2">Donor Information</h6>
+                   <div className="small">
+                     <p className="mb-1"><strong>Name:</strong> {selectedListing.donorName || 'N/A'}</p>
+                     <p className="mb-1"><strong>Email:</strong> {selectedListing.donorEmail || 'N/A'}</p>
+                     <p className="mb-0"><strong>Phone:</strong> {selectedListing.phoneNumber}</p>
+                   </div>
+                </div>
+              </Col>
+            </Row>
+          ) : (
+            <p className="text-center text-muted">Details not available.</p>
+          )}
+        </Modal.Body>
+        <Modal.Footer className="border-0 pt-0">
+          <Button variant="secondary" onClick={handleCloseModal}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </Container>
   );
 };
