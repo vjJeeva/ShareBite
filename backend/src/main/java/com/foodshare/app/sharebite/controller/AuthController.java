@@ -53,36 +53,44 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
 
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        Long userId;
-        String userRole;
-        String userEmail;
-        Object principal = authentication.getPrincipal();
+            Long userId;
+            String userRole;
+            String userEmail;
+            Object principal = authentication.getPrincipal();
 
-        if (principal instanceof UserDetailsImpl userPrincipal) {
-            userId = userPrincipal.id();
-            userRole = userPrincipal.getAuthorities().iterator().next().getAuthority();
-            userEmail = userPrincipal.getUsername();
-        } else if (principal instanceof UserDetails userPrincipal) {
-            User user = userRepository.findByEmail(userPrincipal.getUsername())
-                    .orElseThrow(() -> new RuntimeException("Error: User not found after authentication."));
-            userId = user.getId();
-            userRole = user.getRole();
-            userEmail = user.getEmail();
-        } else {
-            throw new RuntimeException("Unrecognized principal type after authentication.");
+            if (principal instanceof UserDetailsImpl userPrincipal) {
+                userId = userPrincipal.id();
+                String authority = userPrincipal.getAuthorities().iterator().next().getAuthority();
+                userRole = authority.startsWith("ROLE_") ? authority.substring(5) : authority;
+                userEmail = userPrincipal.getUsername();
+            } else if (principal instanceof UserDetails userPrincipal) {
+                User user = userRepository.findByEmail(userPrincipal.getUsername())
+                        .orElseThrow(() -> new RuntimeException("Error: User not found after authentication."));
+                userId = user.getId();
+                userRole = user.getRole();
+                userEmail = user.getEmail();
+            } else {
+                throw new RuntimeException("Unrecognized principal type after authentication.");
+            }
+
+            String jwt = jwtUtils.generateJwtToken(userId);
+
+            return ResponseEntity.ok(new JwtResponse(jwt,
+                    userId,
+                    userEmail,
+                    userRole));
+
+        } catch (org.springframework.security.authentication.DisabledException e) {
+            return ResponseEntity.status(401).body("Error: Your email is not verified. Please check your inbox for the OTP.");
+        } catch (org.springframework.security.authentication.BadCredentialsException e) {
+            return ResponseEntity.status(401).body("Error: Invalid email or password.");
         }
-
-        String jwt = jwtUtils.generateJwtToken(userId);
-
-        return ResponseEntity.ok(new JwtResponse(jwt,
-                userId,
-                userEmail,
-                userRole));
     }
 
     @PostMapping("/register")
@@ -166,8 +174,11 @@ public class AuthController {
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> request) {
         String email = request.get("email");
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
+        User user = userRepository.findByEmail(email).orElse(null);
+
+        if (user == null) {
+            return ResponseEntity.badRequest().body("Error: User not found with email: " + email);
+        }
 
         user = generateAndSaveOtp(user);
         emailService.sendOtpEmail(user.getEmail(), user.getOtpCode(), EmailType.PASSWORD_RESET);
@@ -180,8 +191,11 @@ public class AuthController {
         String email = request.get("email");
         String otp = request.get("otp");
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found."));
+        User user = userRepository.findByEmail(email).orElse(null);
+
+        if (user == null) {
+            return ResponseEntity.badRequest().body("Error: User not found.");
+        }
 
         if (user.getOtpCode() == null || !otp.equals(user.getOtpCode())) {
             return ResponseEntity.badRequest().body("Invalid OTP code.");
@@ -199,8 +213,11 @@ public class AuthController {
         String otp = request.get("otp");
         String newPassword = request.get("newPassword");
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found."));
+        User user = userRepository.findByEmail(email).orElse(null);
+
+        if (user == null) {
+            return ResponseEntity.badRequest().body("Error: User not found.");
+        }
 
         if (user.getOtpCode() == null || !otp.equals(user.getOtpCode()) || user.getOtpExpiryTime().isBefore(Instant.now())) {
             return ResponseEntity.badRequest().body("Session expired or invalid. Please try again.");
