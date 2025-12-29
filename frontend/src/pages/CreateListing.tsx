@@ -1,8 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Form, Button, Alert } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
 import api from '../api/api';
 import { FaUtensils, FaImage, FaMapMarkerAlt, FaUsers, FaClock, FaPhone } from 'react-icons/fa';
+
+// Fix for default Leaflet marker icons
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 const CreateListing: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -36,11 +46,14 @@ const CreateListing: React.FC = () => {
     setError('');
 
     try {
-      // Mock coordinates for now if not provided
+        if (formData.latitude === 0 || formData.longitude === 0) {
+            alert("Please pin a location on the map.");
+            setLoading(false);
+            return;
+        }
+
       const submissionData = {
         ...formData,
-        latitude: formData.latitude || 40.7128,
-        longitude: formData.longitude || -74.0060,
         servings: Number(formData.servings),
         // Ensure valid ISO string for Instant
         claimByTime: new Date(formData.claimByTime).toISOString(),
@@ -59,6 +72,26 @@ const CreateListing: React.FC = () => {
       setLoading(false);
     }
   };
+
+  // Component to handle map clicks and location
+  function LocationMarker() {
+    const [position, setPosition] = useState<L.LatLng | null>(
+      formData.latitude !== 0 ? L.latLng(formData.latitude, formData.longitude) : null
+    );
+    
+    useMapEvents({
+      click(e) {
+        setPosition(e.latlng);
+        setFormData(prev => ({ ...prev, latitude: e.latlng.lat, longitude: e.latlng.lng }));
+      },
+    });
+
+    return position === null ? null : (
+      <Marker position={position}>
+        <Popup>Pickup Location</Popup>
+      </Marker>
+    );
+  }
 
   return (
     <Container className="py-5">
@@ -150,10 +183,39 @@ const CreateListing: React.FC = () => {
                 </Form.Group>
 
                 <Form.Group className="mb-3">
-                  <Form.Label><FaMapMarkerAlt className="me-2" />Pickup Address</Form.Label>
+                  <Form.Label><FaMapMarkerAlt className="me-2" />Pin Pickup Location</Form.Label>
+                  <div className="border rounded overflow-hidden mb-2" style={{ height: '350px', width: '100%' }}>
+                    <MapContainer 
+                        center={[20.5937, 78.9629]} // Default center (India)
+                        zoom={5} 
+                        scrollWheelZoom={true} 
+                        style={{ height: '100%', width: '100%' }}
+                    >
+                        <TileLayer
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        />
+                        <LocationMarker />
+                    </MapContainer>
+                  </div>
+                  {formData.latitude !== 0 ? (
+                       <div className="bg-light p-2 rounded border-start border-success border-4 d-inline-block">
+                           <span className="text-success fw-bold">
+                               <FaMapMarkerAlt /> Location set: {formData.latitude.toFixed(6)}, {formData.longitude.toFixed(6)}
+                           </span>
+                       </div>
+                  ) : (
+                      <Alert variant="info" className="py-2 px-3 mb-0 d-inline-block small">
+                          Please click on the map to set the exact pickup location.
+                      </Alert>
+                  )}
+                </Form.Group>
+
+                <Form.Group className="mb-3">
+                  <Form.Label>Pickup Address (Detailed text)</Form.Label>
                   <Form.Control 
                     name="address"
-                    placeholder="123 Community St, City" 
+                    placeholder="e.g. Apartment, Street, Landmark" 
                     onChange={handleChange}
                     required 
                   />

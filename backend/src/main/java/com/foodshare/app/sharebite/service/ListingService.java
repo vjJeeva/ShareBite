@@ -1,8 +1,12 @@
 package com.foodshare.app.sharebite.service;
 
 import com.foodshare.app.sharebite.model.Listing;
+import com.foodshare.app.sharebite.model.Profile;
+import com.foodshare.app.sharebite.model.User;
 import com.foodshare.app.sharebite.payload.request.ListingRequest;
 import com.foodshare.app.sharebite.repository.ListingRepository;
+import com.foodshare.app.sharebite.repository.ProfileRepository;
+import com.foodshare.app.sharebite.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,8 +20,14 @@ public class ListingService {
     @Autowired
     private ListingRepository listingRepository;
 
-    public Listing createListing(ListingRequest request, Long donorId) {
+    @Autowired
+    private ProfileRepository profileRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    public Listing createListing(ListingRequest request, Long donorId) {
+        // ... (existing code remains same)
         Listing listing = new Listing();
         listing.setName(request.getName());
         listing.setDescription(request.getDescription());
@@ -49,6 +59,13 @@ public class ListingService {
     }
 
     public Optional<Listing> getListingById(Long id) {
-        return listingRepository.findById(id);
+        Optional<Listing> listingOpt = listingRepository.findById(id);
+        if (listingOpt.isPresent()) {
+            Listing listing = listingOpt.get();
+            // Populate donor info
+            profileRepository.findByUserId(listing.getDonorId()).ifPresent(p -> listing.setDonorName(p.getName()));
+            userRepository.findById(listing.getDonorId()).ifPresent(u -> listing.setDonorEmail(u.getEmail()));
+        }
+        return listingOpt;
     }
 }
