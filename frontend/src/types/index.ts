@@ -25,6 +25,8 @@ export interface Listing {
   claimByTime: string;
   donorId: number;
   claimerId?: number;
+  donorName?: string;
+  donorEmail?: string;
   recipientSigned: boolean;
   donorVerified: boolean;
 }
