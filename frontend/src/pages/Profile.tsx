@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Row, Col, Card, Form, Button, Alert, Spinner } from 'react-bootstrap';
+import { Container, Row, Col, Card, Form, Spinner, Alert } from 'react-bootstrap';
 import api from '../api/api';
 import type { Profile } from '../types';
 import { FaUserCircle, FaEnvelope, FaPhone, FaIdCard } from 'react-icons/fa';
@@ -9,7 +9,6 @@ const ProfilePage: React.FC = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const { user } = useAuth();
 
   useEffect(() => {
@@ -22,24 +21,6 @@ const ProfilePage: React.FC = () => {
       setProfile(response.data);
     } catch (err) {
       setError('Failed to load profile details.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!profile) return;
-    
-    setLoading(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      await api.put('/profile/me', profile);
-      setSuccess('Profile updated successfully!');
-    } catch (err) {
-      setError('Failed to update profile.');
     } finally {
       setLoading(false);
     }
@@ -59,36 +40,34 @@ const ProfilePage: React.FC = () => {
             </div>
             <Card.Body className="p-4">
               {error && <Alert variant="danger">{error}</Alert>}
-              {success && <Alert variant="success">{success}</Alert>}
 
-              <Form onSubmit={handleUpdate}>
+              <Form>
                 <Form.Group className="mb-3">
                   <Form.Label className="text-muted small fw-bold"><FaIdCard className="me-2" />Full Name</Form.Label>
                   <Form.Control 
                     value={profile?.name || ''} 
-                    onChange={(e) => setProfile(prev => prev ? {...prev, name: e.target.value} : null)}
-                    required
+                    disabled
+                    className="bg-light"
                   />
                 </Form.Group>
 
                 <Form.Group className="mb-3">
                   <Form.Label className="text-muted small fw-bold"><FaEnvelope className="me-2" />Email Address</Form.Label>
-                  <Form.Control value={user?.email || ''} disabled />
-                  <Form.Text className="text-muted">Email cannot be changed.</Form.Text>
+                  <Form.Control value={user?.email || ''} disabled className="bg-light" />
                 </Form.Group>
 
                 <Form.Group className="mb-4">
                   <Form.Label className="text-muted small fw-bold"><FaPhone className="me-2" />Phone Number</Form.Label>
                   <Form.Control 
                     value={profile?.phoneNumber || ''} 
-                    onChange={(e) => setProfile(prev => prev ? {...prev, phoneNumber: e.target.value} : null)}
-                    required
+                    disabled
+                    className="bg-light"
                   />
                 </Form.Group>
 
-                <Button variant="success" type="submit" className="w-100 py-2 fw-bold" disabled={loading}>
-                  {loading ? 'Updating...' : 'Save Changes'}
-                </Button>
+                <div className="text-center text-muted small">
+                  To update your profile details, please contact support.
+                </div>
               </Form>
             </Card.Body>
           </Card>
