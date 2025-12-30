@@ -3,7 +3,7 @@ import { Container, Table, Badge, Button, Spinner, Alert, Card, Modal, Row, Col 
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import api from '../api/api';
 import type { Claim, Listing } from '../types';
-import { FaHistory, FaTimesCircle, FaMapMarkerAlt, FaUtensils, FaClock, FaInfoCircle } from 'react-icons/fa';
+import { FaHistory, FaTimesCircle, FaMapMarkerAlt, FaUtensils, FaClock, FaInfoCircle, FaPhone, FaEnvelope } from 'react-icons/fa';
 import L from 'leaflet';
 
 // Fix for default Leaflet marker icons
@@ -47,7 +47,6 @@ const MyClaims: React.FC = () => {
       setSelectedListing(response.data);
     } catch (err) {
       console.error("Failed to fetch listing details", err);
-      // Optionally show error inside modal or toast
     } finally {
       setDetailsLoading(false);
     }
@@ -78,19 +77,19 @@ const MyClaims: React.FC = () => {
       {error && <Alert variant="danger">{error}</Alert>}
       
       {claims.length === 0 ? (
-        <Card className="text-center p-5">
+        <Card className="text-center p-5 border-0 shadow-sm">
           <Card.Body>
             <FaHistory size={40} className="text-muted mb-3" />
             <p className="text-muted">You haven't claimed any food yet.</p>
-            <Button variant="success" href="/available">Browse Available Food</Button>
+            <Button variant="success" href="/available" className="rounded-pill px-4">Browse Available Food</Button>
           </Card.Body>
         </Card>
       ) : (
-        <Card className="border-0 shadow-sm">
+        <Card className="border-0 shadow-sm overflow-hidden">
           <Table responsive hover className="mb-0">
             <thead className="bg-light">
               <tr>
-                <th className="px-4 py-3">Listing ID</th>
+                <th className="px-4 py-3">Listing</th>
                 <th className="py-3">Status</th>
                 <th className="py-3">Claim Date</th>
                 <th className="px-4 py-3 text-end">Actions</th>
@@ -98,15 +97,16 @@ const MyClaims: React.FC = () => {
             </thead>
             <tbody>
               {claims.map((claim) => (
-                <tr key={claim.id} className="align-middle">
+                <tr 
+                  key={claim.id} 
+                  className="align-middle" 
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => handleShowDetails(claim.listingId)} // Click whole row to open modal
+                >
                   <td className="px-4">
-                    <Button 
-                      variant="link" 
-                      className="p-0 text-decoration-none fw-bold" 
-                      onClick={() => handleShowDetails(claim.listingId)}
-                    >
-                      #{claim.listingId} <FaInfoCircle className="ms-1 small" />
-                    </Button>
+                    <div className="fw-bold text-success">
+                      #{claim.listingId} <FaInfoCircle className="ms-1 small text-muted" />
+                    </div>
                   </td>
                   <td>
                     <Badge bg={
@@ -122,7 +122,11 @@ const MyClaims: React.FC = () => {
                       <Button 
                         variant="outline-danger" 
                         size="sm" 
-                        onClick={() => handleCancel(claim.id)}
+                        className="rounded-pill"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Stops the modal from opening when clicking cancel
+                          handleCancel(claim.id);
+                        }}
                       >
                         <FaTimesCircle className="me-1" /> Cancel
                       </Button>
@@ -148,7 +152,7 @@ const MyClaims: React.FC = () => {
           ) : selectedListing ? (
             <Row>
               <Col md={5} className="mb-3 mb-md-0 d-flex flex-column gap-3">
-                <div className="rounded overflow-hidden shadow-sm" style={{ height: '200px' }}>
+                <div className="rounded overflow-hidden shadow-sm border" style={{ height: '220px' }}>
                   <img 
                     src={selectedListing.photoUrl || 'https://via.placeholder.com/400x300?text=Food'} 
                     alt={selectedListing.name}
@@ -156,19 +160,16 @@ const MyClaims: React.FC = () => {
                   />
                 </div>
                 {selectedListing.latitude !== 0 && (
-                  <div className="rounded overflow-hidden shadow-sm border" style={{ height: '200px' }}>
+                  <div className="rounded overflow-hidden shadow-sm border" style={{ height: '220px' }}>
                      <MapContainer 
                         center={[selectedListing.latitude, selectedListing.longitude]} 
-                        zoom={14} 
+                        zoom={15} 
                         scrollWheelZoom={false} 
                         style={{ height: '100%', width: '100%' }}
                      >
-                        <TileLayer
-                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        />
+                        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                         <Marker position={[selectedListing.latitude, selectedListing.longitude]}>
-                           <Popup>Pickup Location</Popup>
+                            <Popup>Pickup Location</Popup>
                         </Marker>
                      </MapContainer>
                   </div>
@@ -177,11 +178,11 @@ const MyClaims: React.FC = () => {
               <Col md={7}>
                 <div className="d-flex justify-content-between align-items-start mb-2">
                   <Badge bg="success" className="mb-2">{selectedListing.type}</Badge>
-                  <span className="text-muted small">ID: #{selectedListing.id}</span>
+                  <span className="text-muted small">Listing ID: #{selectedListing.id}</span>
                 </div>
                 
                 <h4 className="fw-bold mb-1">{selectedListing.name}</h4>
-                <p className="text-muted mb-3">{selectedListing.description}</p>
+                <p className="text-muted mb-3 small">{selectedListing.description}</p>
                 
                 <div className="mb-2">
                   <FaUtensils className="text-success me-2" />
@@ -193,17 +194,17 @@ const MyClaims: React.FC = () => {
                   <strong>Address:</strong> {selectedListing.address}
                 </div>
                 
-                <div className="mb-3">
+                <div className="mb-4">
                   <FaClock className="text-primary me-2" />
                   <strong>Claim By:</strong> {new Date(selectedListing.claimByTime).toLocaleString()}
                 </div>
 
                 <div className="p-3 bg-light rounded border shadow-sm">
-                   <h6 className="fw-bold mb-3 text-dark border-bottom pb-2">Donor Information</h6>
+                   <h6 className="fw-bold mb-3 text-dark border-bottom pb-2">Pickup Contact Information</h6>
                    <div className="small">
-                     <p className="mb-1"><strong>Name:</strong> {selectedListing.donorName || 'N/A'}</p>
-                     <p className="mb-1"><strong>Email:</strong> {selectedListing.donorEmail || 'N/A'}</p>
-                     <p className="mb-0"><strong>Phone:</strong> {selectedListing.phoneNumber}</p>
+                     <p className="mb-2"><FaInfoCircle className="me-2 text-muted" /><strong>Donor:</strong> {selectedListing.donorName || 'Shared User'}</p>
+                     <p className="mb-2"><FaEnvelope className="me-2 text-muted" /><strong>Email:</strong> <a href={`mailto:${selectedListing.donorEmail}`} className="text-decoration-none">{selectedListing.donorEmail || 'N/A'}</a></p>
+                     <p className="mb-0"><FaPhone className="me-2 text-muted" /><strong>Phone:</strong> <a href={`tel:${selectedListing.phoneNumber}`} className="text-decoration-none fw-bold text-success">{selectedListing.phoneNumber}</a></p>
                    </div>
                 </div>
               </Col>
@@ -212,8 +213,8 @@ const MyClaims: React.FC = () => {
             <p className="text-center text-muted">Details not available.</p>
           )}
         </Modal.Body>
-        <Modal.Footer className="border-0 pt-0">
-          <Button variant="secondary" onClick={handleCloseModal}>
+        <Modal.Footer className="border-0">
+          <Button variant="secondary" onClick={handleCloseModal} className="rounded-pill px-4">
             Close
           </Button>
         </Modal.Footer>

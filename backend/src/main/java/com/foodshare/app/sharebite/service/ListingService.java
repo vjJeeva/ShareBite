@@ -1,13 +1,12 @@
 package com.foodshare.app.sharebite.service;
 
 import com.foodshare.app.sharebite.model.Listing;
-import com.foodshare.app.sharebite.model.Profile;
-import com.foodshare.app.sharebite.model.User;
 import com.foodshare.app.sharebite.payload.request.ListingRequest;
 import com.foodshare.app.sharebite.repository.ListingRepository;
 import com.foodshare.app.sharebite.repository.ProfileRepository;
 import com.foodshare.app.sharebite.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -26,8 +25,10 @@ public class ListingService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
+
     public Listing createListing(ListingRequest request, Long donorId) {
-        // ... (existing code remains same)
         Listing listing = new Listing();
         listing.setName(request.getName());
         listing.setDescription(request.getDescription());
@@ -47,25 +48,45 @@ public class ListingService {
         } else {
             listing.setClaimByTime(Instant.now().plusSeconds(24 * 3600));
         }
-        return listingRepository.save(listing);
+
+        Listing saved = listingRepository.save(listing);
+
+        populateDonorInfo(saved);
+
+        messagingTemplate.convertAndSend("/topic/new-food", saved);
+
+        return saved;
     }
+
 
     public List<Listing> getAvailableListings() {
-        return listingRepository.findByStatus("AVAILABLE");
+        List<Listing> listings = listingRepository.findByStatus("AVAILABLE");
+        // Hydrate every listing with donor details
+        listings.forEach(this::populateDonorInfo);
+        return listings;
     }
 
+
     public List<Listing> getListingsByDonor(Long donorId) {
-        return listingRepository.findByDonorId(donorId);
+        List<Listing> listings = listingRepository.findByDonorId(donorId);
+        listings.forEach(this::populateDonorInfo);
+        return listings;
     }
+
 
     public Optional<Listing> getListingById(Long id) {
         Optional<Listing> listingOpt = listingRepository.findById(id);
-        if (listingOpt.isPresent()) {
-            Listing listing = listingOpt.get();
-            // Populate donor info
-            profileRepository.findByUserId(listing.getDonorId()).ifPresent(p -> listing.setDonorName(p.getName()));
-            userRepository.findById(listing.getDonorId()).ifPresent(u -> listing.setDonorEmail(u.getEmail()));
-        }
+        listingOpt.ifPresent(this::populateDonorInfo);
         return listingOpt;
+    }
+
+    private void populateDonorInfo(Listing listing) {
+        if (listing.getDonorId() != null) {
+            profileRepository.findByUserId(listing.getDonorId())
+                    .ifPresent(p -> listing.setDonorName(p.getName()));
+
+            userRepository.findById(listing.getDonorId())
+                    .ifPresent(u -> listing.setDonorEmail(u.getEmail()));
+        }
     }
 }
