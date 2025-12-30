@@ -46,4 +46,5 @@ export interface AuthResponse {
   id: number;
   email: string;
   role: 'DONOR' | 'RECIPIENT';
+  name:string;
 }
