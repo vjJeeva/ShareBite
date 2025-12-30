@@ -37,9 +37,10 @@ public class Listing {
     @NotBlank(message = "Food type is required")
     private String type;
 
-    @NotBlank(message = "Photo URL is required")
-    @Column(length = 2048)
-    private String photoUrl; // photo URL (result of cloud upload)
+    @NotBlank(message = "Photo is required")
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    private String photoUrl;
 
     @NotNull(message = "Latitude is required")
     private Double latitude; // map location (for geolocation)

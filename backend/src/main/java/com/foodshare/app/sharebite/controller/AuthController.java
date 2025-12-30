@@ -81,10 +81,15 @@ public class AuthController {
 
             String jwt = jwtUtils.generateJwtToken(userId);
 
+            Profile profile = profileRepository.findByUserId(userId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Profile not found for user: " + userId));
+            String name = profile.getName();
+
             return ResponseEntity.ok(new JwtResponse(jwt,
                     userId,
                     userEmail,
-                    userRole));
+                    userRole,
+                    name));
 
         } catch (org.springframework.security.authentication.DisabledException e) {
             return ResponseEntity.status(401).body("Error: Your email is not verified. Please check your inbox for the OTP.");
