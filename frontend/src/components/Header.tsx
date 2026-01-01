@@ -2,7 +2,7 @@ import React from 'react';
 import { Navbar, Nav, Container, Button } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FaUtensils, FaSignOutAlt, FaUser, FaList, FaHandsHelping } from 'react-icons/fa';
+import { FaUtensils, FaSignOutAlt, FaUser,} from 'react-icons/fa';
 
 const Header: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();

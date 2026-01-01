@@ -4,6 +4,7 @@ import com.foodshare.app.sharebite.model.Claim;
 import com.foodshare.app.sharebite.model.Listing;
 import com.foodshare.app.sharebite.repository.ClaimRepository;
 import com.foodshare.app.sharebite.repository.ListingRepository;
+import com.foodshare.app.sharebite.repository.ProfileRepository;
 import com.foodshare.app.sharebite.exception.ResourceNotFoundException;
 import com.foodshare.app.sharebite.exception.ClaimProcessException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,9 +23,11 @@ public class ClaimService {
     @Autowired
     private ListingRepository listingRepository;
 
+    @Autowired
+    private ProfileRepository profileRepository;
+
     @Transactional
     public Claim claimListing(Long listingId, Long recipientId) {
-
         Listing listing = listingRepository.findById(listingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Listing not found with ID: " + listingId));
 
@@ -47,7 +50,6 @@ public class ClaimService {
 
     @Transactional
     public Claim fulfillClaim(Long claimId, Long userId) {
-
         Claim claim = claimRepository.findById(claimId)
                 .orElseThrow(() -> new ResourceNotFoundException("Claim not found with ID: " + claimId));
 
@@ -65,7 +67,6 @@ public class ClaimService {
         claim.setStatus("FULFILLED");
         claim.setFulfillmentTime(Instant.now());
         Claim fulfilledClaim = claimRepository.save(claim);
-
 
         listing.setStatus("COMPLETED");
         listingRepository.save(listing);
@@ -104,6 +105,15 @@ public class ClaimService {
         List<Listing> donorListings = listingRepository.findByDonorId(donorId);
         List<Long> listingIds = donorListings.stream().map(Listing::getId).toList();
 
-        return claimRepository.findByListingIdIn(listingIds);
+        List<Claim> claims = claimRepository.findByListingIdIn(listingIds);
+
+        for (Claim claim : claims) {
+            profileRepository.findByUserId(claim.getRecipientId()).ifPresent(p -> {
+                claim.setRecipientName(p.getName());
+                claim.setRecipientPhone(p.getPhoneNumber());
+            });
+        }
+
+        return claims;
     }
 }
