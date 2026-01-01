@@ -38,6 +38,8 @@ export interface Claim {
   status: 'PENDING_PICKUP' | 'FULFILLED' | 'CANCELLED';
   claimTime: string;
   fulfillmentTime?: string;
+  recipientName?: string;
+  recipientPhone?: string;
 }
 
 export interface AuthResponse {

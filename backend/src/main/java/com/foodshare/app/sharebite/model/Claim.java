@@ -24,20 +24,24 @@ public class Claim {
     @Column(name = "listing_id", nullable = false)
     private Long listingId;
 
-
-
     @NotNull(message = "Recipient ID is required")
     @Column(name = "recipient_id", nullable = false)
     private Long recipientId;
 
     @Column(nullable = false)
+    @Builder.Default
     private String status = "PENDING_PICKUP";
 
-
     @Column(nullable = false)
+    @Builder.Default
     private Instant claimTime = Instant.now();
-
 
     @Column(name = "fulfillment_time")
     private Instant fulfillmentTime;
+
+    @Transient
+    private String recipientName;
+
+    @Transient
+    private String recipientPhone;
 }
