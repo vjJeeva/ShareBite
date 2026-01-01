@@ -27,15 +27,42 @@ public class ListingController {
     public ResponseEntity<?> createListing(
             @Valid @RequestBody ListingRequest listingRequest,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
-
         try {
             Long donorId = userDetails.id();
             Listing newListing = listingService.createListing(listingRequest, donorId);
             return new ResponseEntity<>(newListing, HttpStatus.CREATED);
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error creating listing: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/update/{id}")
+    @PreAuthorize("hasAuthority('ROLE_DONOR')")
+    public ResponseEntity<?> updateListing(
+            @PathVariable Long id,
+            @Valid @RequestBody ListingRequest listingRequest,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        try {
+            Listing updatedListing = listingService.updateListing(id, listingRequest, userDetails.id());
+            return ResponseEntity.ok(updatedListing);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Error updating listing: " + e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/delete/{id}")
+    @PreAuthorize("hasAuthority('ROLE_DONOR')")
+    public ResponseEntity<?> deleteListing(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        try {
+            listingService.deleteListing(id, userDetails.id());
+            return ResponseEntity.ok("Listing deleted successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Error deleting listing: " + e.getMessage());
         }
     }
 
@@ -57,7 +84,6 @@ public class ListingController {
     @PreAuthorize("hasAuthority('ROLE_DONOR')")
     public ResponseEntity<List<Listing>> getListingsByCurrentDonor(
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
-
         List<Listing> listings = listingService.getListingsByDonor(userDetails.id());
         return ResponseEntity.ok(listings);
     }
