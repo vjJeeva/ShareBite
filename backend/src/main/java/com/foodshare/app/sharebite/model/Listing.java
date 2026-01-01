@@ -57,6 +57,7 @@ public class Listing {
     private String phoneNumber;
 
     @Column(nullable = false)
+    @Builder.Default
     private String status = "AVAILABLE"; // AVAILABLE, CLAIMED, EXPIRED, COMPLETED
 
     private Instant claimByTime;
@@ -66,7 +67,10 @@ public class Listing {
 
     private Long claimerId;
 
+    @Builder.Default
     private Boolean recipientSigned = false;
+
+    @Builder.Default
     private Boolean donorVerified = false;
 
     @Transient
