@@ -4,7 +4,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import api from '../api/api';
 import type { Listing } from '../types';
 import { useAuth } from '../context/AuthContext';
-import { FaMapMarkerAlt, FaUtensils, FaClock, FaPhone, FaEnvelope, FaInfoCircle } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaUtensils, FaClock,} from 'react-icons/fa';
 
 const AvailableFood: React.FC = () => {
   const [listings, setListings] = useState<Listing[]>([]);
