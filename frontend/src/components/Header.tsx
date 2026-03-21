@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { FaUtensils, FaSignOutAlt, FaUser,} from 'react-icons/fa';
 
 const Header: React.FC = () => {
-  const { user, logout, isAuthenticated } = useAuth();
+  const { logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {

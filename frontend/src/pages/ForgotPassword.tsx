@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Container, Row, Col, Card, Form, Button, Alert } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/api';
-import { FaLock, FaEnvelope } from 'react-icons/fa';
+import { FaEnvelope } from 'react-icons/fa';
+import './ForgotPassword.css';
 
 const ForgotPassword: React.FC = () => {
   const [email, setEmail] = useState('');
