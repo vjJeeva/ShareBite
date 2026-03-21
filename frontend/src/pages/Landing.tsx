@@ -3,6 +3,7 @@ import { Container, Row, Col, Button, Card } from 'react-bootstrap';
 import { Link, Navigate } from 'react-router-dom';
 import { FaHandsHelping, FaLeaf, FaUserFriends, FaArrowRight } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
+import './Landing.css';
 
 const Landing: React.FC = () => {
   const { isAuthenticated } = useAuth();
