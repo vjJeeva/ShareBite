@@ -3,12 +3,15 @@ package com.foodshare.app.sharebite.service;
 import com.foodshare.app.sharebite.model.Listing;
 import com.foodshare.app.sharebite.payload.request.ListingRequest;
 import com.foodshare.app.sharebite.repository.ListingRepository;
+import com.foodshare.app.sharebite.repository.ProfileRepository;
+import com.foodshare.app.sharebite.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.time.Instant;
 import java.util.List;
@@ -23,6 +26,15 @@ public class ListingServiceTest {
 
     @Mock
     private ListingRepository listingRepository;
+
+    @Mock
+    private ProfileRepository profileRepository;
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private SimpMessagingTemplate messagingTemplate;
 
     @InjectMocks
     private ListingService listingService;
