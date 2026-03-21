@@ -1,0 +1,130 @@
+/* ===== ANIMATION ===== */
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ===== TITLE FIX ===== */
+h2 {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ===== TEXT ===== */
+p {
+  margin: 0;
+}
+
+/* ===== CARD ===== */
+.card {
+  border-radius: 12px;
+}
+
+/* ===== FORM ===== */
+.form-control {
+  border-radius: 8px;
+  padding: 10px;
+}
+
+/* Label (NO BREAK) */
+.form-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+
+/* ===== BUTTON ===== */
+.btn {
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+/* ===== LINKS ===== */
+a {
+  transition: 0.2s ease;
+}
+
+a:hover {
+  opacity: 0.8;
+}
+
+/* ===== MOBILE RESPONSIVE ===== */
+@media (max-width: 768px) {
+
+  /* Container spacing */
+  .container {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+
+  /* Full width card */
+  .row > div {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+
+  .card {
+    padding: 15px !important;
+  }
+
+  .card-body {
+    padding: 15px !important;
+  }
+
+  /* Title */
+  h2 {
+    font-size: 20px !important;
+  }
+
+  /* Subtitle */
+  p {
+    font-size: 14px;
+  }
+
+  /* Inputs */
+  .form-control {
+    font-size: 14px;
+  }
+
+  /* Button */
+  .btn {
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  /* Alert */
+  .alert {
+    font-size: 13px;
+  }
+
+  /* Bottom text */
+  .text-center.mt-4 {
+    font-size: 14px;
+  }
+}
+
+/* ===== SMALL MOBILE ===== */
+@media (max-width: 480px) {
+
+  h2 {
+    font-size: 18px !important;
+  }
+
+  p {
+    font-size: 13px;
+  }
+
+  .form-control {
+    font-size: 13px;
+  }
+
+  .btn {
+    font-size: 13px;
+  }
+}

@@ -4,15 +4,21 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import api from '../api/api';
 import type { Listing } from '../types';
 import { useAuth } from '../context/AuthContext';
-import { FaMapMarkerAlt, FaUtensils, FaClock,} from 'react-icons/fa';
+import { FaMapMarkerAlt, FaUtensils, FaClock } from 'react-icons/fa';
+import TermsModal from "./TermsModal"; // ✅ added
+import './AvailableFood.css';
 
 const AvailableFood: React.FC = () => {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [claimingId, setClaimingId] = useState<number | null>(null);
-  
-  // Modal State for "Amazon-style" details
+
+  // ✅ Terms states
+  const [showTerms, setShowTerms] = useState(false);
+  const [pendingClaimId, setPendingClaimId] = useState<number | null>(null);
+
+  // Modal State
   const [showModal, setShowModal] = useState(false);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
 
@@ -43,23 +49,39 @@ const AvailableFood: React.FC = () => {
     setSelectedListing(null);
   };
 
-  const handleClaim = async (listingId: number) => {
+  // ✅ ORIGINAL LOGIC MOVED HERE (UNCHANGED)
+  const executeClaim = async (listingId: number) => {
     if (!isAuthenticated) {
       alert('Please login to claim food.');
       return;
     }
-    
+
     setClaimingId(listingId);
     try {
       await api.post(`/claims/initiate/${listingId}`);
       alert('Food claimed successfully! Check "My Claims" for details.');
-      setShowModal(false); 
-      fetchListings(); 
+      setShowModal(false);
+      fetchListings();
     } catch (err: any) {
       alert(err.response?.data || 'Failed to claim food.');
     } finally {
       setClaimingId(null);
     }
+  };
+
+  // ✅ NEW WRAPPER
+  const handleClaim = (listingId: number) => {
+    setPendingClaimId(listingId);
+    setShowTerms(true);
+  };
+
+  // ✅ AFTER AGREEMENT
+  const handleAgree = () => {
+    if (pendingClaimId !== null) {
+      executeClaim(pendingClaimId);
+    }
+    setShowTerms(false);
+    setPendingClaimId(null);
   };
 
   if (loading) return (
@@ -124,8 +146,8 @@ const AvailableFood: React.FC = () => {
                     variant="success" 
                     className="w-100 fw-bold rounded-pill"
                     onClick={(e) => {
-                        e.stopPropagation(); // Prevents the modal from opening when clicking claim
-                        handleClaim(listing.id);
+                        e.stopPropagation();
+                        handleClaim(listing.id); // ✅ now opens Terms
                     }}
                     disabled={claimingId === listing.id}
                   >
@@ -154,7 +176,7 @@ const AvailableFood: React.FC = () => {
                     className="w-100 h-100 object-fit-cover"
                   />
                 </div>
-                {/* INTERACTIVE MAP */}
+
                 <div className="rounded overflow-hidden shadow-sm border" style={{ height: '200px' }}>
                   <MapContainer 
                     center={[selectedListing.latitude, selectedListing.longitude]} 
@@ -176,30 +198,18 @@ const AvailableFood: React.FC = () => {
                 <hr />
                 
                 <div className="mb-3">
-                  <p className="mb-2"><FaUtensils className="me-2 text-success" /> <strong>Servings:</strong> {selectedListing.servings}</p>
-                  <p className="mb-2"><FaMapMarkerAlt className="me-2 text-danger" /> <strong>Address:</strong> {selectedListing.address}</p>
-                  <p className="mb-2"><FaClock className="me-2 text-primary" /> <strong>Expiry:</strong> {new Date(selectedListing.claimByTime).toLocaleString()}</p>
-                </div>
-
-                <div className="p-3 bg-light rounded border mb-3">
-                   <h6 className="fw-bold mb-2 small text-uppercase text-muted">Donor Information</h6>
-                   <p className="mb-1 small"><strong>Name:</strong> {selectedListing.donorName || 'Verified Donor'}</p>
-                   {isAuthenticated && (
-                     <>
-                        <p className="mb-1 small"><strong>Email:</strong> {selectedListing.donorEmail || 'N/A'}</p>
-                        <p className="mb-0 small"><strong>Phone:</strong> {selectedListing.phoneNumber}</p>
-                     </>
-                   )}
+                  <p><FaUtensils className="me-2 text-success" /> {selectedListing.servings}</p>
+                  <p><FaMapMarkerAlt className="me-2 text-danger" /> {selectedListing.address}</p>
+                  <p><FaClock className="me-2 text-primary" /> {new Date(selectedListing.claimByTime).toLocaleString()}</p>
                 </div>
 
                 {user?.role === 'RECIPIENT' && (
                   <Button 
-                    variant="success" 
-                    className="w-100 py-2 fw-bold"
-                    onClick={() => handleClaim(selectedListing.id)}
-                    disabled={claimingId === selectedListing.id}
+                    variant="success"
+                    className="w-100"
+                    onClick={() => handleClaim(selectedListing.id)} // ✅ Terms here too
                   >
-                    {claimingId === selectedListing.id ? <Spinner size="sm" /> : 'Confirm Claim'}
+                    Confirm Claim
                   </Button>
                 )}
               </Col>
@@ -207,6 +217,15 @@ const AvailableFood: React.FC = () => {
           )}
         </Modal.Body>
       </Modal>
+
+      {/* ✅ TERMS MODAL */}
+      {showTerms && (
+        <TermsModal
+          type="Claim Food"
+          onAgree={handleAgree}
+          onClose={() => setShowTerms(false)}
+        />
+      )}
     </Container>
   );
 };

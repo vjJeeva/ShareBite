@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import api from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { FaLock, FaEnvelope } from 'react-icons/fa';
+import './Login.css';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');

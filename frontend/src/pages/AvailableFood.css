@@ -1,0 +1,154 @@
+/* Smooth animation */
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Hover effect */
+.hover-card:hover {
+  transform: translateY(-5px);
+}
+
+/* ===== TITLE FIX (IMPORTANT) ===== */
+.card-title,
+h2,
+h3 {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Description clamp */
+.card-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Image fix */
+.object-fit-cover {
+  object-fit: cover;
+}
+
+/* ===== MAP FIX ===== */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+/* ===== MOBILE RESPONSIVENESS ===== */
+@media (max-width: 768px) {
+
+  /* Container padding */
+  .container {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+
+  /* Header */
+  h2 {
+    font-size: 18px !important;
+  }
+
+  /* Cards become full width */
+  .row > div {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+
+  /* Card spacing */
+  .card {
+    margin-bottom: 15px;
+  }
+
+  /* Image resize */
+  .card img {
+    height: 180px !important;
+  }
+
+  /* Card body */
+  .card-body {
+    padding: 15px !important;
+  }
+
+  /* Title shrink (NO FORMAT CHANGE) */
+  .card-title {
+    font-size: 16px !important;
+  }
+
+  /* Description */
+  .card-text {
+    font-size: 13px;
+  }
+
+  /* Address text */
+  .text-muted.small {
+    font-size: 12px !important;
+  }
+
+  /* Button full width */
+  .btn {
+    width: 100%;
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  /* ===== MODAL FIX ===== */
+  .modal-dialog {
+    margin: 10px;
+  }
+
+  .modal-body {
+    padding: 15px !important;
+  }
+
+  /* Modal image */
+  .modal img {
+    height: 200px !important;
+  }
+
+  /* Map resize */
+  .leaflet-container {
+    height: 180px !important;
+  }
+
+  /* Modal text */
+  .modal h3 {
+    font-size: 18px;
+  }
+
+  .modal p {
+    font-size: 14px;
+  }
+}
+
+/* ===== SMALL MOBILE (EXTRA) ===== */
+@media (max-width: 480px) {
+
+  h2 {
+    font-size: 16px !important;
+  }
+
+  .card-title {
+    font-size: 15px !important;
+  }
+
+  .card img {
+    height: 160px !important;
+  }
+
+  .btn {
+    font-size: 13px;
+  }
+  .row > div {
+  flex: 0 0 100%;
+}
+white-space: nowrap;
+text-overflow: ellipsis;
+}
