@@ -101,3 +101,41 @@ select,
   transform: translateY(-5px);
   transition: all 0.3s ease;
 }
+
+/* ================================
+   GLOBAL MOBILE UNIFORM LAYOUT
+================================ */
+
+/* Prevent any shrinking */
+* {
+  box-sizing: border-box;
+}
+
+/* Lock body width */
+body {
+  overflow-x: hidden;
+  background: #f8f9fa;
+}
+
+/* -------------------------------
+   FORCE SINGLE COLUMN ON MOBILE
+-------------------------------- */
+@media (max-width: 768px) {
+
+  /* Force Bootstrap columns to stack */
+  .row > * {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Disable grid behavior */
+  .col,
+  .col-sm,
+  .col-md,
+  .col-lg {
+    flex: 0 0 100% !important;
+  }
+
+}
+
+/

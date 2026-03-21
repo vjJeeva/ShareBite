@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { FaUtensils, FaHandsHelping, FaList, FaHistory, FaBell } from 'react-icons/fa';
 import SockJS from 'sockjs-client';
 import Stomp from 'stompjs';
+import './Dashboard.css';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
