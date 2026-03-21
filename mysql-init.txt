@@ -1,2 +1,2 @@
-ALTER USER 'root'@'localhost' IDENTIFIED BY 'jeeva123';
+ALTER USER 'root'@'localhost' IDENTIFIED BY '#arjun16112004';
 CREATE DATABASE IF NOT EXISTS sharebite_db;

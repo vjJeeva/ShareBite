@@ -31,7 +31,30 @@ const Register: React.FC = () => {
       // Redirect to OTP verification after registration
       navigate('/verify-otp', { state: { email: formData.email } });
     } catch (err: any) {
-      setError(err.response?.data || 'Registration failed. Please try again.');
+      console.log("Full error object:", err);
+      console.log("Error response data:", err.response?.data);
+      let displayMessage = 'Registration failed. Please try again.';
+      if (err.response && err.response.data) {
+        if (typeof err.response.data === 'string') {
+          displayMessage = err.response.data;
+        } else if (typeof err.response.data === 'object' && err.response.data !== null) {
+          // Prioritize specific field errors if available (e.g., from @Valid annotations)
+          if (err.response.data.errors && Array.isArray(err.response.data.errors) && err.response.data.errors.length > 0) {
+            // Join messages from all field errors
+            displayMessage = err.response.data.errors.map((e: any) => e.defaultMessage || e.message || 'Validation error').join('; ');
+          } else if (typeof err.response.data.message === 'string') {
+            // Fallback to general message field
+            displayMessage = err.response.data.message;
+          } else if (typeof err.response.data.error === 'string') {
+            // Fallback to 'error' field if 'message' is not suitable
+            displayMessage = err.response.data.error;
+          } else {
+            // Generic fallback for unhandled object structures
+            displayMessage = 'An unexpected error occurred during registration.';
+          }
+        }
+      }
+      setError(displayMessage);
     } finally {
       setLoading(false);
     }
